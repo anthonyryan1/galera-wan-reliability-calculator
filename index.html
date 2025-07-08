@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Galera WAN reliability calculator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 2em auto;
+      padding: 1em;
+      background: #f0f0f0;
+      border-radius: 8px;
+    }
+    label, select, input {
+      display: block;
+      margin-bottom: 1em;
+    }
+    output {
+      display: block;
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Galera WAN reliability calculator</h1>
+  <p>
+    Galera has been promoted as a WAN Cluster solution for many years.
+    Hopeful sysadmins have deployed it, envisioning a future where their database can survive an entire site failure.
+    Seasoned database administrators say Galera isn't reliable outside a single data center or extremely reliable metro area.
+  </p>
+  <p>
+    The reason your entire Galera WAN cluster went Non-Primary is packet loss.
+  </p>
+  <p>
+    "But I deployed three nodes, and only one experienced packet loss! I still have a two-node quorum."
+  </p>
+  <p>
+    Wrong.
+    For Galera to work, you not only need a quorum of nodes online, you also need <strong>every</strong> node to agree unanimously on which nodes are functioning parts of the cluster.
+  </p>
+  <p>
+    If your working nodes don't agree unanimously, the good news is that they will try three times!
+    The bad news is you may still get called in the middle of the night to fix your "high availability" WAN cluster.
+  </p>
+  <p>
+    Let's calculate your probable fate!
+  </p>
+
+  <hr>
+
+  <label>
+    Packet loss % experienced by any single node
+    <input type="number" id="packetloss" min="0" max="100" step="1" value="15" autocomplete="off">
+  </label>
+
+  <label>
+    Number of cluster nodes
+    <select id="recipients" autocomplete="off">
+      <option value="3">3</option>
+      <option value="5">5</option>
+    </select>
+  </label>
+
+  <button onclick="calculate()">Calculate</button>
+
+  <output id="result1"></output>
+  <output id="result2"></output>
+
+  <script>
+    const PACKETLOSS = document.getElementById('packetloss');
+    const NODES = document.getElementById('recipients');
+
+    function calculate() {
+      const n = parseInt(NODES.value) - 1;
+      const q = parseInt(PACKETLOSS.value) / 100;
+      const p = 1 - q;
+
+      const sameOneRound = Math.pow(p, n) + Math.pow(q, n);
+      const differentThreeRounds = Math.pow(1 - sameOneRound, 3);
+
+      document.getElementById('result1').textContent =
+        `Probability your working nodes agree unanimously: ${(sameOneRound * 100).toFixed(4)}%`;
+
+      document.getElementById('result2').textContent =
+        `Probability they give up before agreeing: ${(differentThreeRounds * 100).toFixed(4)}%`;
+    }
+
+    PACKETLOSS.addEventListener('change', calculate);
+    NODES.addEventListener('change', calculate);
+  </script>
+</body>
+</html>
